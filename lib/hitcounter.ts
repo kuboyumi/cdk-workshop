@@ -22,7 +22,7 @@ export class HitCounter extends Construct {
     });
 
     this.handler = new aws_lambda.Function(this, 'HitCounterHandler', {
-      runtime: aws_lambda.Runtime.NODEJS_14_X,
+      runtime: aws_lambda.Runtime.NODEJS_18_X,
       handler: 'hitcounter.handler',
       code: aws_lambda.Code.fromAsset('lambda'),
       environment: {
@@ -30,5 +30,11 @@ export class HitCounter extends Construct {
         HITS_TABLE_NAME: table.tableName
       }
     });
+    
+    // grant the lambda role read/write permissions to our table
+    table.grantReadWriteData(this.handler);
+
+    // grant the lambda role invoke permissions to the downstream function
+    props.downstream.grantInvoke(this.handler);
   }
 }

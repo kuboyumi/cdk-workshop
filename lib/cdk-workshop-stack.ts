@@ -1,4 +1,5 @@
 import { 
+  App,
   aws_apigateway,
   aws_iam,
   aws_lambda,
@@ -6,10 +7,10 @@ import {
   Stack,
   StackProps
 } from 'aws-cdk-lib';
-import { Construct } from 'constructs';
+import { HitCounter } from './hitcounter';
 
 export class CdkWorkshopStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: App, id: string, props?: StackProps) {
     super(scope, id, props);
 
     // defines an AWS Lambda resource
@@ -18,6 +19,10 @@ export class CdkWorkshopStack extends Stack {
       code: aws_lambda.Code.fromAsset('lambda'),  // code loaded from "lambda" directory
       handler: 'hello.handler'                    // file is "hello", function is "handler"
     })
+
+    const helloWithCounter = new HitCounter(this, 'HelloHitCounter', {
+      downstream: hello
+    });
 
     // defines an IP address to allow access to the API Gateway
     const ssmApigatewayIp = aws_ssm.StringParameter.valueForStringParameter(this, '/apigateway/allow-ip')
@@ -47,7 +52,7 @@ export class CdkWorkshopStack extends Stack {
 
     // defines an API Gateway REST API resource backed by our "hello" function
     new aws_apigateway.LambdaRestApi(this, 'Endpoint', {
-      handler: hello,
+      handler: helloWithCounter.handler,
       policy: resourcePolicy
     })
   }
